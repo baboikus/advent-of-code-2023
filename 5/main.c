@@ -84,19 +84,18 @@ u64 map_project(map_t map, u64 src) {
 
 range_t *map_project_range(map_t map, range_t src, range_t *dst) {
   map_t map_start = map;
-  range_t q_src[32];
+
+  range_t q_src[256];
   size_t q_src_head_idx = 0, q_src_tail_idx = 1;
 
   q_src[q_src_head_idx] = src;
-  while (map->len > 0) {
-    if (q_src_head_idx == q_src_tail_idx)
-      break;
-
+  while (q_src_head_idx < q_src_tail_idx) {
+    int reset_map = 0;
     src = q_src[q_src_head_idx];
-    if (src.start <= map->src_start &&
-        (src.start + src.len) >= map->src_start &&
+    if (src.start <= map->src_start && (src.start + src.len) > map->src_start &&
         (src.start + src.len) <= (map->src_start + map->len)) {
       q_src_head_idx++;
+      reset_map = 1;
 
       dst->start = map->dst_start;
       dst->len = (src.start + src.len) - map->src_start;
@@ -108,42 +107,53 @@ range_t *map_project_range(map_t map, range_t src, range_t *dst) {
     } else if (src.start >= map->src_start &&
                (src.start + src.len) <= (map->src_start + map->len)) {
       q_src_head_idx++;
+      reset_map = 1;
 
       dst->start = map->dst_start + (src.start - map->src_start);
       dst->len = src.len;
       dst++;
     } else if (src.start >= map->src_start &&
-               src.start <= (map->src_start + map->len) &&
+               src.start < (map->src_start + map->len) &&
                (src.start + src.len) >= (map->src_start + map->len)) {
       q_src_head_idx++;
+      reset_map = 1;
 
       dst->start = map->dst_start + (src.start - map->src_start);
       dst->len = (map->src_start + map->len) - src.start;
       dst++;
-      if ((src.start + src.len) > (map->src_start + map->len)) {
+      if (src.start > map->src_start) {
         q_src[q_src_tail_idx++] = (range_t){.start = map->src_start + map->len,
                                             .len = (src.start + src.len) -
                                                    (map->src_start + map->len)};
       }
+
     } else if (src.start < map->src_start &&
                (src.start + src.len) > (map->src_start + map->len)) {
+
       q_src_head_idx++;
+      reset_map = 1;
+
       dst->start = map->dst_start;
       dst->len = map->len;
       dst++;
 
       q_src[q_src_tail_idx++] =
-          (range_t){.start = src.start, .len = map->src_start - src.start};
-      q_src[q_src_tail_idx++] =
           (range_t){.start = map->src_start + map->len,
                     .len = (src.start + src.len) - (map->src_start + map->len)};
+      q_src[q_src_tail_idx++] =
+          (range_t){.start = src.start, .len = map->src_start - src.start};
     }
 
-    map++;
-  }
-
-  while(q_src_head_idx != q_src_tail_idx) {
-      *dst++ = q_src[q_src_head_idx++];
+    if (reset_map) {
+      map = map_start;
+    } else {
+      map++;
+      if (map->len == 0) {
+        *dst++ = src;
+        q_src_head_idx++;
+        map = map_start;
+      }
+    }
   }
 
   dst->len = 0;
@@ -180,17 +190,18 @@ void part2() {
   fptr = fopen("input", "r");
 
   char buffer[512];
-  range_t mapping[2][256];
+  range_t mapping[2][512];
   range_t *current_mapping = mapping[0];
   range_t *new_mapping = mapping[1];
 
   ranges_read(fptr, current_mapping);
-  map_row_t map[256];
+  map_row_t map[512];
   for (; feof(fptr) == 0;) {
     map_read(fptr, map);
-    range_t* new_mapping_tail = new_mapping;
+    range_t *new_mapping_tail = new_mapping;
     for (size_t n = 0; current_mapping[n].len; ++n) {
-      new_mapping_tail = map_project_range(map, current_mapping[n], new_mapping_tail);
+      new_mapping_tail =
+          map_project_range(map, current_mapping[n], new_mapping_tail);
     }
 
     range_t *tmp = current_mapping;
