@@ -169,8 +169,6 @@ void part1() {
 
     int d1 = 0, d2 = 0, sum = 0;
     while (fgets(buffer, 256, fptr)) {
-        printf("%s", buffer);
-
         for (char * c = buffer; c; ++c) {
             if ( * c >= '0' && * c <= '9') {
                 d1 = * c - '0';
@@ -184,9 +182,6 @@ void part1() {
                 break;
             }
         }
-
-        printf("d1=%d d2=%d\n", d1, d2);
-
         sum += d1 * 10 + d2;
     }
 
