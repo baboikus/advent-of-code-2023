@@ -83,6 +83,6 @@ size_t solve(char *part, size_t age) {
 
 int main() {
   assert(solve("part1", 1) == 9591768);
-  solve("part2", 1000000 - 1);
+  assert(solve("part2", 1000000 - 1) == 746962097860);
   return 0;
 }
