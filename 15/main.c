@@ -114,7 +114,7 @@ void part2() {
 
   lens_t lenses[4 * 1024];
   memset(lenses, 0, sizeof(lens_t) * 256);
-  size_t n_lenses;
+  size_t n_lenses = 0;
 
   while (*line != '\n') {
     char command;
