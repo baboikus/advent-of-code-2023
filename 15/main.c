@@ -113,7 +113,7 @@ void part2() {
   memset(boxes, 0, sizeof(box_t) * 256);
 
   lens_t lenses[4 * 1024];
-  memset(lenses, 0, sizeof(lens_t) * 256);
+  memset(lenses, 0, sizeof(lens_t) * 4 * 1024);
   size_t n_lenses = 0;
 
   while (*line != '\n') {
